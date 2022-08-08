@@ -1,0 +1,1 @@
+export OPEN_WEATHER_MAP_APPID=xxxxx
