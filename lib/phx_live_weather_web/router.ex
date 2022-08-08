@@ -17,7 +17,7 @@ defmodule WeatherAppWeb.Router do
   scope "/", WeatherAppWeb do
     pipe_through :browser
 
-    live "/", WeatherDashbord
+    live "/", WeatherDashboard
   end
 
   # Other scopes may use custom stacks.
