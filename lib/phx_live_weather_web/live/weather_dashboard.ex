@@ -8,18 +8,20 @@ defmodule WeatherAppWeb.WeatherDashboard do
     Weather Dashboard
     <br />
     <.form let={f} for={:search_field} phx-submit="search">
-      <%= text_input f, :query, phx_change: "search", phx_debounce: 300, placeholder: "location" %>
+      <%= text_input f, :query, phx_change: "search", phx_debounce: 300, placeholder: "location", class: "rounded text-pink-500" %>
     </.form>
     <br />
     <%= if length(@location_list) > 0 do %>
       <%= for location <- @location_list do %>
         <%= "#{location["name"]}, #{location["state"]}" %>
-        <button phx-click="change-location" phx-value-lat={location["lat"]} phx-value-lon={location["lon"]} />
+        <button class="rounded-full" phx-click="change-location" phx-value-lat={location["lat"]} phx-value-lon={location["lon"]}>
+          Select
+        </button>
         <br />
       <% end %>
     <% end %>
     <br />
-    Location: <%= @stats["name"] %>
+    Location: <%= "#{@stats["name"]}, #{@stats["sys"]["country"]}" %>
     <br />
     Weather: <%= for weather <- @stats["weather"] do %>
       <%= weather["description"] %>
