@@ -32,3 +32,4 @@ phx_live_weather-*.tar
 npm-debug.log
 /assets/node_modules/
 /env/local.env.sh
+/env/prod.env.sh
