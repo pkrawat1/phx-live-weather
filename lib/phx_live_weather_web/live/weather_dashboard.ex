@@ -20,19 +20,21 @@ defmodule WeatherAppWeb.WeatherDashboard do
         <br />
       <% end %>
     <% end %>
-    <br />
-    Location: <%= "#{@stats["name"]}, #{@stats["sys"]["country"]}" %>
-    <br />
-    Weather: <%= for weather <- @stats["weather"] do %>
-      <%= weather["description"] %>
-    <% end %>
-    <br />
-    Temparature: <%= "#{Api.format_temp(@stats["main"]["temp"], @temp_in)} #{@temp_in}" %>
+    <div id="locationData" phx-hook="saveData">
+      <br />
+      Location: <%= "#{@stats["name"]}, #{@stats["sys"]["country"]}" %>
+      <br />
+      Weather: <%= for weather <- @stats["weather"] do %>
+        <%= weather["description"] %>
+      <% end %>
+      <br />
+      Temparature: <%= "#{Api.format_temp(@stats["main"]["temp"], @temp_in)} #{@temp_in}" %>
+    </div>
     """
   end
 
   def mount(_params, _session, socket) do
-    stats = Api.get_weather(socket.assigns[:current_location])
+    stats = Api.get_weather(get_connect_params(socket)["client_data"]["current_location"])
     {:ok, socket |> assign(:stats, stats) |> assign(:temp_in, "C") |> assign(:location_list, [])}
   end
 
@@ -45,11 +47,18 @@ defmodule WeatherAppWeb.WeatherDashboard do
   def handle_event("change-location", %{"lat" => _lat, "lon" => _lon} = location, socket) do
     stats = Api.get_weather(location)
 
+    socket =
+      socket
+      |> assign(:current_location, location)
+      |> assign(:stats, stats)
+      |> assign(:temp_in, "C")
+      |> assign(:location_list, [])
+
     {:noreply,
-     socket
-     |> assign(:current_location, location)
-     |> assign(:stats, stats)
-     |> assign(:temp_in, "C")
-     |> assign(:location_list, [])}
+     push_event(
+       socket,
+       "saveData",
+       %{current_location: location}
+     )}
   end
 end
