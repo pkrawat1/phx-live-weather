@@ -50,5 +50,4 @@ config :logger, level: :info
 # Check `Plug.SSL` for all available options in `force_ssl`.
 
 # Configure your database
-config :phx_live_weather, WeatherApp.Repo,
-  url: System.get_env("DATABASE_URL")
+config :phx_live_weather, WeatherApp.Repo, url: System.get_env("DATABASE_URL")

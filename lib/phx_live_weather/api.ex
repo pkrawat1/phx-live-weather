@@ -1,11 +1,11 @@
 defmodule WeatherApp.Api do
   @geo_api "https://api.openweathermap.org/geo/1.0/direct?appid=#{Application.fetch_env!(:phx_live_weather, :appid)}&"
   @weather_api "https://api.openweathermap.org/data/2.5/weather?appid=#{Application.fetch_env!(:phx_live_weather, :appid)}&"
-  @default_location "pune"
   @location_suggest_limit 5
   @cache_key :weather_cache
 
-  def get_weather(location) when is_nil(location), do: default_weather()
+  def get_weather(locations) when is_nil(locations), do: []
+  def get_weather(locations) when is_list(locations), do: Enum.map(locations, &get_weather(&1))
 
   def get_weather(%{"lat" => lat, "lon" => lon}) do
     url = @weather_api <> "lat=#{lat}&lon=#{lon}"
@@ -25,12 +25,7 @@ defmodule WeatherApp.Api do
     end
   end
 
-  def default_weather do
-    @default_location
-    |> location_list()
-    |> List.first()
-    |> get_weather()
-  end
+  def get_weather(_), do: []
 
   def location_list(location) do
     url = @geo_api <> "q=#{location}&limit=#{@location_suggest_limit}"
