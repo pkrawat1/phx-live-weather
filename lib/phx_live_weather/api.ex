@@ -37,6 +37,28 @@ defmodule WeatherApp.Api do
 
   def get_weather(_), do: []
 
+  def get_grouped_weather([]), do: %{}
+
+  def get_grouped_weather(ids) when is_list(ids) do
+    url = group_weather_api() <> "id=#{Enum.join(ids, ",")}"
+
+    case Cachex.get(@cache_key, url) do
+      {:ok, nil} ->
+        %HTTPoison.Response{
+          body: body
+        } = HTTPoison.get!(url)
+
+        group_weather = Jason.decode!(body)
+        Cachex.put(@cache_key, url, group_weather, ttl: :timer.minutes(10))
+        group_weather
+
+      {:ok, group_weather} ->
+        group_weather
+    end
+  end
+
+  def get_grouped_weather(_), do: %{}
+
   def location_list(location) do
     url = geo_api() <> "q=#{location}&limit=#{@location_suggest_limit}"
 

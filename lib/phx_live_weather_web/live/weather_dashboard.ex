@@ -26,10 +26,10 @@ defmodule WeatherAppWeb.WeatherDashboard do
 
   def mount(_params, _session, socket) do
     if connected?(socket),
-      do: :timer.send_interval(:timer.minutes(10), self(), :update_weather_data)
+      do: :timer.send_interval(:timer.minutes(5), self(), :update_weather_data)
 
     saved_locations = get_connect_params(socket)["client_data"]["saved_locations"] || []
-    stats = Api.get_weather(saved_locations)
+    stats = saved_locations |> Api.get_grouped_weather() |> Map.get("list", [])
 
     {:ok,
      socket
@@ -45,22 +45,20 @@ defmodule WeatherAppWeb.WeatherDashboard do
 
   def handle_event("search", _, socket), do: {:noreply, assign(socket, :location_list, [])}
 
-  def handle_event("add-location", %{"lat" => lat, "lon" => lon} = location, socket) do
-    data_exists =
-      Enum.find(
-        socket.assigns.saved_locations,
-        &(&1["lat"] === lat && &1["lon"] === lon)
-      ) || false
+  def handle_event(
+        "add-location",
+        %{"lat" => lat, "lon" => lon} = location,
+        %{assigns: %{saved_locations: saved_locations, stats: stats}} = socket
+      ) do
+    location_stat = Api.get_weather(location)
+    data_exists = location_stat["id"] in saved_locations
 
-    stats =
-      if data_exists,
-        do: socket.assigns.stats,
-        else: [Api.get_weather(location) | socket.assigns.stats]
+    stats = if data_exists, do: stats, else: [Api.get_weather(location) | stats]
 
     saved_locations =
       if data_exists,
-        do: socket.assigns.saved_locations,
-        else: [location | socket.assigns.saved_locations]
+        do: saved_locations,
+        else: Enum.map(stats, & &1["id"])
 
     socket =
       socket
@@ -77,8 +75,13 @@ defmodule WeatherAppWeb.WeatherDashboard do
      )}
   end
 
-  def handle_info(:update_weather_data, %{assigns: %{saved_locations: saved_locations}} = socket) do
-    stats = Api.get_weather(saved_locations)
+  def handle_info(:update_weather_data, %{assigns: %{stats: stats}} = socket) do
+    stats =
+      stats
+      |> Enum.map(& &1["id"])
+      |> Api.get_grouped_weather()
+      |> Map.get("list", [])
+
     {:noreply, assign(socket, :stats, stats)}
   end
 end
