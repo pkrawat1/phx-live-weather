@@ -5,6 +5,8 @@ defmodule WeatherApp.Api do
   def weather_api,
     do:
       "https://api.openweathermap.org/data/2.5/weather?appid=#{System.get_env("OPEN_WEATHER_MAP_APPID")}&"
+  def group_weather_api,
+    do: "https://api.openweathermap.org/data/2.5/group?appid=#{System.get_env("OPEN_WEATHER_MAP_APPID")}&"
 
   def geo_api,
     do:
