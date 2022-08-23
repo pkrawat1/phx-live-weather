@@ -64,7 +64,8 @@ defmodule WeatherAppWeb.WeatherDashboard do
         do: socket.assigns.saved_locations,
         else: [location | socket.assigns.saved_locations]
 
-    IO.inspect socket.assigns
+    IO.inspect(socket.assigns)
+
     socket =
       socket
       |> assign(:saved_locations, saved_locations)
