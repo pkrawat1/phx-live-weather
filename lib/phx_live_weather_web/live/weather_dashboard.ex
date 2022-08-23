@@ -25,8 +25,12 @@ defmodule WeatherAppWeb.WeatherDashboard do
   end
 
   def mount(_params, _session, socket) do
+    if connected?(socket),
+      do: :timer.send_interval(:timer.minutes(10), self(), :update_weather_data)
+
     saved_locations = get_connect_params(socket)["client_data"]["saved_locations"] || []
     stats = Api.get_weather(saved_locations)
+
     {:ok,
      socket
      |> assign(:stats, stats)
@@ -48,19 +52,16 @@ defmodule WeatherAppWeb.WeatherDashboard do
         &(&1["lat"] === lat && &1["lon"] === lon)
       ) || false
 
-    IO.inspect data_exists
     stats =
       if data_exists,
         do: socket.assigns.stats,
         else: [Api.get_weather(location) | socket.assigns.stats]
 
-    IO.inspect stats
     saved_locations =
       if data_exists,
         do: socket.assigns.saved_locations,
         else: [location | socket.assigns.saved_locations]
 
-    IO.inspect saved_locations 
     socket =
       socket
       |> assign(:saved_locations, saved_locations)
@@ -74,5 +75,10 @@ defmodule WeatherAppWeb.WeatherDashboard do
        "saveData",
        %{saved_locations: saved_locations}
      )}
+  end
+
+  def handle_info(:update_weather_data, %{assigns: %{saved_locations: saved_locations}} = socket) do
+    stats = Api.get_weather(saved_locations)
+    {:noreply, assign(socket, :stats, stats)}
   end
 end
