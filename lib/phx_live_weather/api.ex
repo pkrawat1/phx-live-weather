@@ -2,8 +2,13 @@ defmodule WeatherApp.Api do
   @location_suggest_limit 5
   @cache_key :weather_cache
 
-  def weather_api, do: Application.fetch_env!(:phx_live_weather, :weather_api)
-  def geo_api, do: Application.fetch_env!(:phx_live_weather, :geo_api)
+  def weather_api,
+    do:
+      "https://api.openweathermap.org/data/2.5/weather?appid=#{System.get_env("OPEN_WEATHER_MAP_APPID")}&"
+
+  def geo_api,
+    do:
+      "https://api.openweathermap.org/geo/1.0/direct?appid=#{System.get_env("OPEN_WEATHER_MAP_APPID")}&"
 
   def get_weather(locations) when is_nil(locations), do: []
   def get_weather(locations) when is_list(locations), do: Enum.map(locations, &get_weather(&1))
