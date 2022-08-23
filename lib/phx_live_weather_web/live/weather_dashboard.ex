@@ -6,39 +6,33 @@ defmodule WeatherAppWeb.WeatherDashboard do
 
   def render(assigns) do
     ~H"""
-    <section class="container m-auto">
-      <header class="bg-white space-y-4 p-4 sm:px-8 sm:py-6 lg:p-4 xl:px-8 xl:py-6">
+    <section class="container mx-auto relative z-10 rounded-xl bg-white shadow-xl ring-1 ring-slate-900/5 overflow-hidden my-10 xl:mt-18 dark:bg-slate-800">
+      <header class="rounded-t-xl space-y-4 p-4 sm:px-8 sm:py-6 lg:p-4 xl:px-8 xl:py-6 dark:highlight-white/10">
         <div class="flex items-center justify-between">
-          <h2 class="font-semibold text-slate-900">Weather Dashboard</h2>
-          <a href="/new" class="hover:bg-blue-400 group flex items-center rounded-md bg-blue-500 text-white text-sm font-medium pl-2 pr-3 py-2 shadow-sm">
-            <svg width="20" height="20" fill="currentColor" class="mr-2" aria-hidden="true">
-              <path d="M10 5a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-3v3a1 1 0 1 1-2 0v-3H6a1 1 0 1 1 0-2h3V6a1 1 0 0 1 1-1Z" />
-            </svg>
-            New
-          </a>
+          <h2 class="font-semibold text-slate-900 dark:text-white">Weather Dashboard</h2>
         </div>
         <.live_component module={LocationSearch} id="location_search" location_list={@location_list} />
       </header>
-      <ul class="bg-slate-50 p-4 sm:px-8 sm:pt-6 sm:pb-8 lg:p-4 xl:px-8 xl:pt-6 xl:pb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 text-sm leading-6">
-        <li x-for="project in projects">
-          <%= for stats <- @stats do %>
+      <ul class="bg-slate-50 p-4 sm:px-8 sm:pt-6 sm:pb-8 lg:p-4 xl:px-8 xl:pt-6 xl:pb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 text-sm leading-6 dark:bg-slate-900/40 dark:ring-1 dark:ring-white/5">
+        <%= for stats <- @stats do %>
+          <li class="group cursor-pointer rounded-md p-3 bg-white ring-1 ring-slate-200 shadow-sm hover:bg-blue-500 hover:ring-blue-500 hover:shadow-md dark:bg-slate-700 dark:ring-0 dark:highlight-white/10 dark:hover:bg-blue-500" id={stats["name"]}>
             <.live_component module={LocationTempCard} id={stats["name"]} stats={stats} temp_in={@temp_in} />
-          <% end %>
-        </li>
+          </li>
+        <% end %>
       </ul>
     </section>
     """
   end
 
   def mount(_params, _session, socket) do
-    stats = Api.get_weather(get_connect_params(socket)["client_data"]["saved_locations"])
-
+    saved_locations = get_connect_params(socket)["client_data"]["saved_locations"] || []
+    stats = Api.get_weather(saved_locations)
     {:ok,
      socket
      |> assign(:stats, stats)
      |> assign(:temp_in, "C")
      |> assign(:location_list, [])
-     |> assign(:saved_locations, [])}
+     |> assign(:saved_locations, saved_locations)}
   end
 
   def handle_event("search", %{"search_field" => %{"query" => query}}, socket) when query != "" do
@@ -54,18 +48,19 @@ defmodule WeatherAppWeb.WeatherDashboard do
         &(&1["lat"] === lat && &1["lon"] === lon)
       ) || false
 
+    IO.inspect data_exists
     stats =
       if data_exists,
         do: socket.assigns.stats,
         else: [Api.get_weather(location) | socket.assigns.stats]
 
+    IO.inspect stats
     saved_locations =
       if data_exists,
         do: socket.assigns.saved_locations,
         else: [location | socket.assigns.saved_locations]
 
-    IO.inspect(socket.assigns)
-
+    IO.inspect saved_locations 
     socket =
       socket
       |> assign(:saved_locations, saved_locations)
